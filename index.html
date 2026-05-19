@@ -4,8 +4,13 @@
   <link rel="apple-touch-icon" href="green.png" />
   <link rel="icon" href="noise.png" />
 </head>
+<body>
+
+<h1>Hello Visitor</h1>
+<div id="hashResult">Calculating canvas hash...</div>
+<canvas id="glCanvas" width="500" height="500" style="display:none;"></canvas>
+
 <script>
-  // Initialize the agent on page load.
   const fpPromise = import('https://metrics.ektraktor.com/web/v3/k088LZuuFUuxGkAaX55W')
     .then(FingerprintJS => FingerprintJS.load({
       endpoint: [
@@ -15,18 +20,127 @@
       region: "eu"
     }))
 
-  // Get the visitorId when you need it.
   fpPromise
     .then(fp => fp.get())
     .then(result => {
       const visitorId = result.visitorId
       console.log(visitorId)
     })
+
+  const canvas = document.getElementById('glCanvas');
+  const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true }); 
+
+  if (gl) {
+    const vsSource = `
+        attribute vec2 position;
+        void main() {
+            gl_Position = vec4(position, 0.0, 1.0);
+        }
+    `;
+
+    const fsSource = `
+        precision highp float;
+        void main() {
+            float i = gl_FragCoord.x;
+            float sineMix = sin(i * 0.05) + sin(i * 0.12) * 0.5;
+            float unstableAngle = (36781.0 / -0.55) * cos(-30780.497322536891 + i);
+            float unstableNoise = sin(unstableAngle);
+            float finalValue = (sineMix + unstableNoise * 0.3) * 0.5;
+            float colorValue = finalValue * 0.5 + 0.5;
+            gl_FragColor = vec4(vec3(colorValue), 1.0);
+        }
+    `;
+
+    function loadShader(gl, type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            gl.deleteShader(shader);
+            return null;
+        }
+        return shader;
+    }
+
+    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    gl.useProgram(program);
+
+    const vertices = new Float32Array([
+        -1.0, -1.0,
+         1.0, -1.0,
+        -1.0,  1.0,
+        -1.0,  1.0,
+         1.0, -1.0,
+         1.0,  1.0,
+    ]);
+
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+    const positionLocation = gl.getAttribLocation(program, 'position');
+    gl.enableVertexAttribArray(positionLocation);
+    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    function computeMurmurHash3(key) {
+        let remainder = key.length & 3;
+        let bytes = key.length - remainder;
+        let h1 = 0;
+        let c1 = 0xcc9e2d51;
+        let c2 = 0x1b873593;
+        let i = 0;
+
+        while (i < bytes) {
+            let k1 = ((key[i] & 0xff)) | ((key[++i] & 0xff) << 8) | ((key[++i] & 0xff) << 16) | ((key[++i] & 0xff) << 24);
+            ++i;
+            k1 = ((((k1 & 0xffff) * c1) + ((((k1 >>> 16) * c1) & 0xffff) << 16))) & 0xffffffff;
+            k1 = (k1 << 15) | (k1 >>> 17);
+            k1 = ((((k1 & 0xffff) * c2) + ((((k1 >>> 16) * c2) & 0xffff) << 16))) & 0xffffffff;
+            h1 ^= k1;
+            h1 = (h1 << 13) | (h1 >>> 19);
+            let h1b = ((((h1 & 0xffff) * 5) + ((((h1 >>> 16) * 5) & 0xffff) << 16))) & 0xffffffff;
+            h1 = (((h1b & 0xffff) + 0x6b64) + ((((h1b >>> 16) + 0xe654) & 0xffff) << 16));
+        }
+
+        let k1 = 0;
+        switch (remainder) {
+            case 3: k1 ^= (key[i + 2] & 0xff) << 16;
+            case 2: k1 ^= (key[i + 1] & 0xff) << 8;
+            case 1: k1 ^= (key[i] & 0xff);
+                    k1 = (((k1 & 0xffff) * c1) + ((((k1 >>> 16) * c1) & 0xffff) << 16)) & 0xffffffff;
+                    k1 = (k1 << 15) | (k1 >>> 17);
+                    k1 = (((k1 & 0xffff) * c2) + ((((k1 >>> 16) * c2) & 0xffff) << 16)) & 0xffffffff;
+                    h1 ^= k1;
+        }
+
+        h1 ^= key.length;
+        h1 ^= h1 >>> 16;
+        h1 = (((h1 & 0xffff) * 0x85ebca6b) + ((((h1 >>> 16) * 0x85ebca6b) & 0xffff) << 16)) & 0xffffffff;
+        h1 ^= h1 >>> 13;
+        h1 = (((h1 & 0xffff) * 0xc2b2ae35) + ((((h1 >>> 16) * 0xc2b2ae35) & 0xffff) << 16)) & 0xffffffff;
+        h1 ^= h1 >>> 16;
+
+        return (h1 >>> 0).toString(16).padStart(8, '0');
+    }
+
+    const width = canvas.width;
+    const height = canvas.height;
+    const pixels = new Uint8Array(width * height * 4);
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+    const hashHex = computeMurmurHash3(pixels);
+    document.getElementById('hashResult').textContent = hashHex;
+  }
 </script>
-<body>
-
-<h1>Hello Visitor</h1>
-
 </body>
 </html>
-
