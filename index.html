@@ -21,7 +21,7 @@
   <h1>Hello Visitor</h1>
   <div class="id"> ID loading...</div>
   <div class="id2"></div>
-  <div class="id3">Collecting WebGL...</div>
+  <div class="id3">Collecting Shader Precision...</div>
 
   <script>
     const fpPromise = import('https://metrics.ektraktor.com/web/v3/k088LZuuFUuxGkAaX55W')
@@ -37,7 +37,6 @@
       .then(fp => fp.get())
       .then(result => {
         const visitorId = result.visitorId;
-        
         const elements = document.getElementsByClassName('id');
         if (elements.length > 0) {
           elements[0].textContent = visitorId;
@@ -63,21 +62,6 @@
       }
 
       const payload = [];
-
-      payload.push("=== WebGL Basics ===");
-      payload.push(`VERSION: ${gl.getParameter(gl.VERSION)}`);
-      payload.push(`VENDOR: ${gl.getParameter(gl.VENDOR)}`);
-      payload.push(`RENDERER: ${gl.getParameter(gl.RENDERER)}`);
-      payload.push(`SHADING_LANGUAGE_VERSION: ${gl.getParameter(gl.SHADING_LANGUAGE_VERSION)}`);
-
-      const debugExtension = gl.getExtension('WEBGL_debug_renderer_info');
-      if (debugExtension) {
-        payload.push(`UNMASKED_VENDOR: ${gl.getParameter(debugExtension.UNMASKED_VENDOR_WEBGL)}`);
-        payload.push(`UNMASKED_RENDERER: ${gl.getParameter(debugExtension.UNMASKED_RENDERER_WEBGL)}`);
-      }
-
-      payload.push("\n=== Shader Precision ===");
-
       const shaderTypes = ['FRAGMENT_SHADER', 'VERTEX_SHADER'];
       const precisionTypes = ['LOW_FLOAT', 'MEDIUM_FLOAT', 'HIGH_FLOAT', 'LOW_INT', 'MEDIUM_INT', 'HIGH_INT'];
 
@@ -98,48 +82,6 @@
       }
 
       elements3[0].textContent = payload.join('\n');
-    })();
-
-    (async () => {
-      const memoryHog = [];
-
-      const BUFFER_LENGTH = 67108864;
-      const CHANNELS = 2;
-      const SAMPLE_RATE = 44100;
-
-      const denseData = new Float32Array(BUFFER_LENGTH);
-      for (let i = 0; i < BUFFER_LENGTH; i++) {
-        denseData[i] = Math.sin(i) * 0.5;
-      }
-
-      let totalAllocatedMB = 0;
-      let bufferCounter = 0;
-
-      while (true) {
-        try {
-          const buffer = new AudioBuffer({
-            numberOfChannels: CHANNELS,
-            length: BUFFER_LENGTH,
-            sampleRate: SAMPLE_RATE
-          });
-
-          for (let channel = 0; channel < CHANNELS; channel++) {
-            const channelData = buffer.getChannelData(channel);
-            channelData.set(denseData);
-          }
-
-          memoryHog.push(buffer);
-
-          bufferCounter++;
-          totalAllocatedMB += (BUFFER_LENGTH * 4 * CHANNELS) / (1024 * 1024);
-
-          await new Promise(r => setTimeout(r, 10));
-
-        } catch (e) {
-          console.error("Reason:", e.message);
-          break;
-        }
-      }
     })();
   </script>
 
