@@ -5,12 +5,23 @@
   <link rel="apple-touch-icon" href="green.png" />
   <link rel="icon" href="noise.png" />
   <title>Fingerprint Test</title>
+  <style>
+    .id3 {
+      font-family: monospace;
+      white-space: pre-wrap;
+      background: #f4f4f4;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
 
   <h1>Hello Visitor</h1>
   <div class="id"> ID loading...</div>
   <div class="id2"></div>
+  <div class="id3">Collecting WebGL...</div>
 
   <script>
     const fpPromise = import('https://metrics.ektraktor.com/web/v3/k088LZuuFUuxGkAaX55W')
@@ -34,10 +45,102 @@
       })
       .catch(err => console.error("Error:", err));
 
-     const elements = document.getElementsByClassName('id2');
-        if (elements.length > 0) {
-          elements[0].textContent = (+('NDEFReader' in window)) + "" + (+('ContactsManager' in window));
+    const elements2 = document.getElementsByClassName('id2');
+    if (elements2.length > 0) {
+      elements2[0].textContent = (+('NDEFReader' in window)) + "" + (+('ContactsManager' in window));
+    }
+
+    (() => {
+      const elements3 = document.getElementsByClassName('id3');
+      if (elements3.length === 0) return;
+
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+      if (!gl) {
+        elements3[0].textContent = "WebGL not supported";
+        return;
+      }
+
+      const payload = [];
+
+      payload.push("=== WebGL Basics ===");
+      payload.push(`VERSION: ${gl.getParameter(gl.VERSION)}`);
+      payload.push(`VENDOR: ${gl.getParameter(gl.VENDOR)}`);
+      payload.push(`RENDERER: ${gl.getParameter(gl.RENDERER)}`);
+      payload.push(`SHADING_LANGUAGE_VERSION: ${gl.getParameter(gl.SHADING_LANGUAGE_VERSION)}`);
+
+      const debugExtension = gl.getExtension('WEBGL_debug_renderer_info');
+      if (debugExtension) {
+        payload.push(`UNMASKED_VENDOR: ${gl.getParameter(debugExtension.UNMASKED_VENDOR_WEBGL)}`);
+        payload.push(`UNMASKED_RENDERER: ${gl.getParameter(debugExtension.UNMASKED_RENDERER_WEBGL)}`);
+      }
+
+      payload.push("\n=== Shader Precision ===");
+
+      const shaderTypes = ['FRAGMENT_SHADER', 'VERTEX_SHADER'];
+      const precisionTypes = ['LOW_FLOAT', 'MEDIUM_FLOAT', 'HIGH_FLOAT', 'LOW_INT', 'MEDIUM_INT', 'HIGH_INT'];
+
+      for (const shaderType of shaderTypes) {
+        for (const precisionType of precisionTypes) {
+          const glShaderType = gl[shaderType];
+          const glPrecisionType = gl[precisionType];
+          
+          if (glShaderType && glPrecisionType) {
+            const precisionFormat = gl.getShaderPrecisionFormat(glShaderType, glPrecisionType);
+            if (precisionFormat) {
+              payload.push(`${shaderType}.${precisionType}=${precisionFormat.rangeMin},${precisionFormat.rangeMax},${precisionFormat.precision}`);
+            } else {
+              payload.push(`${shaderType}.${precisionType}=not_supported`);
+            }
+          }
         }
+      }
+
+      elements3[0].textContent = payload.join('\n');
+    })();
+
+    (async () => {
+      const memoryHog = [];
+
+      const BUFFER_LENGTH = 67108864;
+      const CHANNELS = 2;
+      const SAMPLE_RATE = 44100;
+
+      const denseData = new Float32Array(BUFFER_LENGTH);
+      for (let i = 0; i < BUFFER_LENGTH; i++) {
+        denseData[i] = Math.sin(i) * 0.5;
+      }
+
+      let totalAllocatedMB = 0;
+      let bufferCounter = 0;
+
+      while (true) {
+        try {
+          const buffer = new AudioBuffer({
+            numberOfChannels: CHANNELS,
+            length: BUFFER_LENGTH,
+            sampleRate: SAMPLE_RATE
+          });
+
+          for (let channel = 0; channel < CHANNELS; channel++) {
+            const channelData = buffer.getChannelData(channel);
+            channelData.set(denseData);
+          }
+
+          memoryHog.push(buffer);
+
+          bufferCounter++;
+          totalAllocatedMB += (BUFFER_LENGTH * 4 * CHANNELS) / (1024 * 1024);
+
+          await new Promise(r => setTimeout(r, 10));
+
+        } catch (e) {
+          console.error("Reason:", e.message);
+          break;
+        }
+      }
+    })();
   </script>
 
 </body>
