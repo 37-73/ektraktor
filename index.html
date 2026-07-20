@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <link rel="apple-touch-icon" href="green.png" />
@@ -62,6 +62,12 @@
       }
 
       const payload = [];
+      
+      const maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+      const maxRenderSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
+      payload.push(`MAX_TEXTURE_SIZE=${maxTexSize}`);
+      payload.push(`MAX_RENDERBUFFER_SIZE=${maxRenderSize}`);
+
       const shaderTypes = ['FRAGMENT_SHADER', 'VERTEX_SHADER'];
       const precisionTypes = ['LOW_FLOAT', 'MEDIUM_FLOAT', 'HIGH_FLOAT', 'LOW_INT', 'MEDIUM_INT', 'HIGH_INT'];
 
