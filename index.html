@@ -20,7 +20,6 @@
 
   <h1>Hello Visitor</h1>
   <div class="id"> ID loading...</div>
-  <div class="id2"> NAV loading...</div>
 
   <script>
     const fpPromise = import('https://metrics.ektraktor.com/web/v3/k088LZuuFUuxGkAaX55W')
@@ -42,16 +41,6 @@
         }
       })
       .catch(err => console.error("Error:", err));
-
-    
-
-    window.addEventListener('load', () => {
-      const [nav] = performance.getEntriesByType('navigation');
-      if (nav) {
-        const elements2 = document.getElementsByClassName('id2');
-        elements2[0].textContent = JSON.stringify(nav)
-      }
-    })
 
   </script>
 
