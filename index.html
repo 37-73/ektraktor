@@ -20,8 +20,7 @@
 
   <h1>Hello Visitor</h1>
   <div class="id"> ID loading...</div>
-  <div class="id2"></div>
-  <div class="id3">Collecting Shader Precision...</div>
+  <div class="id2"> NAV loading...</div>
 
   <script>
     const fpPromise = import('https://metrics.ektraktor.com/web/v3/k088LZuuFUuxGkAaX55W')
@@ -44,51 +43,16 @@
       })
       .catch(err => console.error("Error:", err));
 
-    const elements2 = document.getElementsByClassName('id2');
-    if (elements2.length > 0) {
-      elements2[0].textContent = (+('NDEFReader' in window)) + "" + (+('ContactsManager' in window));
-    }
+    
 
-    (() => {
-      const elements3 = document.getElementsByClassName('id3');
-      if (elements3.length === 0) return;
-
-      const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-
-      if (!gl) {
-        elements3[0].textContent = "WebGL not supported";
-        return;
+    window.addEventListener('load', () => {
+      const [nav] = performance.getEntriesByType('navigation');
+      if (nav) {
+        const elements2 = document.getElementsByClassName('id2');
+        elements2[0].textContent = JSON.stringify(nav)
       }
+    })
 
-      const payload = [];
-      
-      const maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-      const maxRenderSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
-      payload.push(`MAX_TEXTURE_SIZE=${maxTexSize}`);
-      payload.push(`MAX_RENDERBUFFER_SIZE=${maxRenderSize}`);
-
-      const shaderTypes = ['FRAGMENT_SHADER', 'VERTEX_SHADER'];
-      const precisionTypes = ['LOW_FLOAT', 'MEDIUM_FLOAT', 'HIGH_FLOAT', 'LOW_INT', 'MEDIUM_INT', 'HIGH_INT'];
-
-      for (const shaderType of shaderTypes) {
-        for (const precisionType of precisionTypes) {
-          const glShaderType = gl[shaderType];
-          const glPrecisionType = gl[precisionType];
-          
-          if (glShaderType && glPrecisionType) {
-            const precisionFormat = gl.getShaderPrecisionFormat(glShaderType, glPrecisionType);
-            if (precisionFormat) {
-              payload.push(`${shaderType}.${precisionType}=${precisionFormat.rangeMin},${precisionFormat.rangeMax},${precisionFormat.precision}`);
-            } else {
-              payload.push(`${shaderType}.${precisionType}=not_supported`);
-            }
-          }
-        }
-      }
-
-      elements3[0].textContent = payload.join('\n');
-    })();
   </script>
 
 </body>
