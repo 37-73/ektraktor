@@ -6,7 +6,7 @@
   <link rel="icon" href="noise.png" />
   <title>Fingerprint Test</title>
   <style>
-    .id, .hw-info {
+    .id, .hw-info, .info, .ai {
       font-family: monospace;
       white-space: pre-wrap;
       background: #f4f4f4;
@@ -20,8 +20,11 @@
 
   <h1>Hello Visitor</h1>
   <div class="id">ID loading...</div>
-  
+
   <div class="info">
+  </div>
+
+  <div class="ai">
   </div>
 
   <script>
@@ -45,6 +48,56 @@
       })
       .catch(err => console.error("Error:", err));
 
+    const AiOracle = {
+      _ifaces: [
+        'Summarizer',
+        'LanguageModel',
+        'Writer',
+        'Rewriter',
+        'Translator',
+        'LanguageDetector',
+        'Proofreader'
+      ],
+      _code: {
+        absent: 0,
+        unavailable: 1,
+        downloadable: 2,
+        downloading: 3,
+        available: 4
+      },
+      _opts(name) {
+        // Translator requires a language pair; the rest tolerate no args.
+        return name === 'Translator'
+          ? { sourceLanguage: 'en', targetLanguage: 'es' }
+          : undefined;
+      },
+      async _one(name) {
+        const iface = self[name];
+        if (!iface || typeof iface.availability !== 'function') return 0;
+        try {
+          const state = await iface.availability(this._opts(name));
+          const c = this._code[String(state)];
+          return c === undefined ? 1 : c;
+        } catch (e) {
+          return 1;
+        }
+      },
+      async run() {
+        const vec = [];
+        for (const name of this._ifaces) {
+          vec.push(await this._one(name));
+        }
+        const elements = document.getElementsByClassName('ai');
+        if (elements.length > 0) {
+          elements[0].textContent = 'vector: ' + JSON.stringify(vec);
+        }
+        return vec;
+      }
+    }
+
+    // Start before the WASM chase, which blocks the main thread for seconds.
+    AiOracle.run().catch(err => console.error("AI probe error:", err));
+
     const Oracle = {
       _bytes: [0,97,115,109,1,0,0,0,1,25,5,96,3,125,125,125,1,127,96,1,127,0,96,2,127,127,0,96,0,0,96,1,127,1,127,3,7,6,0,1,2,3,4,3,5,4,1,0,133,2,6,25,3,127,1,65,128,128,192,0,11,127,0,65,188,200,144,8,11,127,0,65,192,200,144,8,11,7,66,6,6,109,101,109,111,114,121,2,0,7,102,110,95,101,118,97,108,0,0,7,102,110,95,105,110,105,116,0,1,6,102,110,95,114,117,110,0,4,10,95,95,100,97,116,97,95,101,110,100,3,1,11,95,95,104,101,97,112,95,98,97,115,101,3,2,10,128,4,6,59,1,1,127,65,0,33,3,2,64,32,1,67,0,0,0,0,94,69,13,0,32,2,32,1,149,67,154,153,185,63,96,33,3,11,65,128,1,65,128,1,65,192,0,32,3,27,32,2,32,1,67,51,51,179,63,148,94,27,11,220,2,1,7,127,32,0,65,2,118,34,1,65,1,32,1,65,1,75,27,34,2,65,2,116,33,3,65,128,146,244,1,32,2,110,33,1,65,0,33,4,65,188,128,192,128,0,33,5,32,0,65,131,200,208,7,75,33,6,65,0,33,0,2,64,2,64,2,64,3,64,2,64,32,1,32,0,71,13,0,65,0,32,2,65,2,116,107,33,7,32,2,32,1,65,127,106,108,34,4,65,2,116,65,188,128,192,128,0,106,33,0,65,183,166,220,153,1,33,5,3,64,32,1,65,2,73,13,3,32,5,65,141,204,229,0,108,65,223,230,187,227,3,106,34,5,32,1,112,33,6,32,4,65,128,146,244,1,79,13,4,2,64,32,6,32,2,108,34,6,65,128,146,244,1,79,13,0,32,0,40,2,0,33,3,32,0,32,6,65,2,116,34,6,40,2,188,128,192,128,0,54,2,0,32,6,32,3,54,2,188,128,192,128,0,32,1,65,127,106,33,1,32,0,32,7,106,33,0,32,4,32,2,107,33,4,12,1,11,11,32,6,65,156,128,192,128,0,16,130,128,128,128,0,0,11,32,6,13,3,2,64,32,4,65,128,146,244,1,79,13,0,32,5,32,0,65,1,106,34,0,32,1,112,32,2,108,54,2,0,32,5,32,3,106,33,5,32,4,32,2,106,33,4,12,1,11,11,32,4,65,172,128,192,128,0,16,130,128,128,128,0,0,11,15,11,32,4,65,140,128,192,128,0,16,130,128,128,128,0,0,11,16,131,128,128,128,0,0,11,9,0,16,133,128,128,128,0,0,11,9,0,16,133,128,128,128,0,0,11,72,1,2,127,35,128,128,128,128,0,65,16,107,33,1,65,0,33,2,2,64,3,64,32,0,69,13,1,32,1,32,2,65,2,116,40,2,188,128,192,128,0,54,2,12,32,1,65,12,106,33,2,32,0,65,127,106,33,0,32,1,40,2,12,33,2,12,0,11,11,32,2,11,7,0,3,64,12,0,11,11,11,69,1,0,65,128,128,192,0,11,60,115,114,99,47,108,105,98,46,114,115,0,0,0,0,16,0,10,0,0,0,34,0,0,0,23,0,0,0,0,0,16,0,10,0,0,0,35,0,0,0,30,0,0,0,0,0,16,0,10,0,0,0,25,0,0,0,13,0,0,0],
       async run() {
@@ -65,12 +118,12 @@
           if (fnRun && fnInit) {
             const strides = [16, 32, 64, 128, 256];
             const iterations = 4_000_000;
-            const lat = [];                                 
+            const lat = [];
 
             for (const st of strides) {
               fnInit(st);
-              fnRun(50_000);                            
-            
+              fnRun(50_000);
+
               let minNs = Infinity;
               for (let pass = 0; pass < 3; pass++) {
                 const t0 = performance.now();
@@ -79,14 +132,14 @@
                 const ns = ((t1 - t0) * 1e6) / iterations;
                 if (ns < minNs) minNs = ns;
               }
-            
+
               const v = Math.round(minNs * 1000) / 1000;
-              lat.push(v);                                  
-            
+              lat.push(v);
+
               const elem = document.getElementById('c' + st);
               if (elem) elem.innerText = v.toFixed(3);
             }
-            
+
             const elements = document.getElementsByClassName('info');
             if (elements.length > 0) {
               elements[0].textContent = JSON.stringify(lat);
@@ -97,7 +150,7 @@
         }
       }
     }
-    
+
     window.addEventListener('load', () => Oracle.run());
   </script>
 
