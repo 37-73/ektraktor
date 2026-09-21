@@ -6,13 +6,18 @@
   <link rel="icon" href="noise.png" />
   <title>Fingerprint Test</title>
   <style>
-    .id, .hw-info, .info, .ai {
+    .id, .hw-info, .info, .ai, .font {
       font-family: monospace;
       white-space: pre-wrap;
       background: #f4f4f4;
       padding: 10px;
       margin-top: 10px;
       border-radius: 4px;
+    }
+    @font-face {
+      font-family: 'TestEngineFont';
+      src: url('data:font/woff2;base64,d09GMgABAAAAAAUwAA0AAAAACdwAAATZAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP0ZGVE0cBmAAgkIIBBEICohUhlYLCgABNgIkAxAEIAWEHAcqG+8HIxFWmwLAXyTwhtQ/cixRDIx6FBVSI52CcMTc4tGxPf44dmwrpoolDzpHkA3b7N59q5pSLfGlWRT645GPRaOqcCiEQSiUbMUh9P//71k3nDSZcVCNhJWdhdpdvyTFrnuaxZekL8i+35z/VanMtZzcxg6VKNJB87/esgHan1/+75rqa1UdSeD/3jlTZ6p+UsqlQJy0AwBj6uzYEfhJsRk1p6flVGMLlTmX8irPQsCv354DgL/b45afNSVk+YQtA0Xees8A95kqPmQGjszX6ADOwDecnf8ryFCpskR4mOW7OEP+r18TKGViyS/3FWEzVmtWVa2dLEhIrMdhBtEEKodojlT4Gf7wglTWc1LhjQVIfVXaN7WIC0BcAbxfsyNBo5LN5Ed1LG/CUX5ke45iB6j6GUnfDPJZ1qYWrBfbjljEI8GZqORjQbHrUl3WLFtblVkVVdWLjLRjTZPcUjHR43VBadKyo0jHay7milJUUi3fbYtByMHTLMiJsc0Fj5VJidXd4DSiGE+c16y6+9uQArKrzdk1TRSyA2Qny6wGldQ7EI/ybHleMW0sPgEOk1NQ7Hs4+y5d2mNxa2tE122zS1srMTQJUY1TvcOttrYeo8OIVoN8S1gtKFqBNbPnGLfUorkw1aUqmm5meoeEbi5mukWX+TC4nw1heszJGtR5rUXTdE6r33PH3m5C5JSleYd7JWs7vTsHIZxo1BycnWFLnbzHFoMc631ugtxOWW+SFZlHOcgr3r59h/x3RboMrucRZzqeSUtvLrUXjrelhcAuZmp5v5qG2GQyZUfvkJ5P8Iq4pXgUAc/e02odFVcxVh27rEVKwszhm8Z979A68+44axiZMIRQsweeipt1/NFyd1AYUVfRQfQYCN5YNrlmvnBs5PLX/ut7Ng7mLyRnhRvzq2cHVVQFTsrYMauy9+agNtlEo57dxdcxRLXoIlpTUjoh5HT4ZKWejGxT4xtBMRLDlrEWXzacTSIjuOzNkUzn3KzIlEyP5ybHXD64/YaF8OUi5UdSqyh2lk8u3zaV4CoZLoelchhzaXbL0+v7XKsIubznzOjZSWQQHchU+YalUytbZ8+8Si9vGTXJyDRQdL0hhQ/qo1ytr1iubBnTx+lHVcc0bMSqMloSLWGAfOwvPbMKH9qdXEGsxzKWUBmtMVIwBUf/jRs+eB3cQuILLG9UWAeabUHShRFjf339eXfpZr86dmxmkJmrpP2pBqYVkGVs9ruobRsMeAU2Ep+K1ft4AABgGwbb3+5DQlnbaOphyXYCh7JgG+HSURhQpiHYH52H70dDIHhs81LsMSqZ4YgXl5UykvJwOWdpy1pgE7PyCRAxBxiiVa84QRTh2UTurTEAFE1LF9KxNGRg6CmfsWxfh9Axh9RyDcW2F6g6IULDKCqe0dSJviBENQC7yCBMzSANXUJxahlU08ChYSUitKbvd7VEtRFGmmRY67U6FvGVAkRhyk2MvE1qIyO3qGj4b6rZMvgtN933VI83tC7UQDsLq2e3Xl0RaDe/xntJJUBrtZYzyWn4LD4J1FkbKkutVWNRpxh5nZZyyHdYEYmnBDnHS4qR36DbmlTK9CIERBdKkmcC+1xYlfZSM3psqwljgonSBB4nGDNLytW5UszhyAP9v4sCwJAk3+rLYwAAAAA=') format('woff2');
+      font-display: block;
     }
   </style>
 </head>
@@ -21,13 +26,16 @@
   <h1>Hello Visitor</h1>
   <div class="id">ID loading...</div>
 
-  <div class="info">
-  </div>
+  <div class="info"></div>
 
-  <div class="ai">
-  </div>
+  <div class="ai"></div>
 
+  <div class="font">
+    <span id="status">Loading font test...</span>
+  </div>
+  
   <script>
+    // 1. FingerprintJS
     const fpPromise = import('https://metrics.ektraktor.com/web/v3/k088LZuuFUuxGkAaX55W')
       .then(FingerprintJS => FingerprintJS.load({
         endpoint: [
@@ -46,8 +54,9 @@
           elements[0].textContent = visitorId;
         }
       })
-      .catch(err => console.error("Error:", err));
+      .catch(err => console.error("Fingerprint Error:", err));
 
+    // 2. AI Capabilities Probe
     const AiOracle = {
       _ifaces: [
         'Summarizer',
@@ -66,7 +75,6 @@
         available: 4
       },
       _opts(name) {
-        // Translator requires a language pair; the rest tolerate no args.
         return name === 'Translator'
           ? { sourceLanguage: 'en', targetLanguage: 'es' }
           : undefined;
@@ -93,11 +101,11 @@
         }
         return vec;
       }
-    }
+    };
 
-    // Start before the WASM chase, which blocks the main thread for seconds.
     AiOracle.run().catch(err => console.error("AI probe error:", err));
 
+    // 3. WASM Performance Test
     const Oracle = {
       _bytes: [0,97,115,109,1,0,0,0,1,25,5,96,3,125,125,125,1,127,96,1,127,0,96,2,127,127,0,96,0,0,96,1,127,1,127,3,7,6,0,1,2,3,4,3,5,4,1,0,133,2,6,25,3,127,1,65,128,128,192,0,11,127,0,65,188,200,144,8,11,127,0,65,192,200,144,8,11,7,66,6,6,109,101,109,111,114,121,2,0,7,102,110,95,101,118,97,108,0,0,7,102,110,95,105,110,105,116,0,1,6,102,110,95,114,117,110,0,4,10,95,95,100,97,116,97,95,101,110,100,3,1,11,95,95,104,101,97,112,95,98,97,115,101,3,2,10,128,4,6,59,1,1,127,65,0,33,3,2,64,32,1,67,0,0,0,0,94,69,13,0,32,2,32,1,149,67,154,153,185,63,96,33,3,11,65,128,1,65,128,1,65,192,0,32,3,27,32,2,32,1,67,51,51,179,63,148,94,27,11,220,2,1,7,127,32,0,65,2,118,34,1,65,1,32,1,65,1,75,27,34,2,65,2,116,33,3,65,128,146,244,1,32,2,110,33,1,65,0,33,4,65,188,128,192,128,0,33,5,32,0,65,131,200,208,7,75,33,6,65,0,33,0,2,64,2,64,2,64,3,64,2,64,32,1,32,0,71,13,0,65,0,32,2,65,2,116,107,33,7,32,2,32,1,65,127,106,108,34,4,65,2,116,65,188,128,192,128,0,106,33,0,65,183,166,220,153,1,33,5,3,64,32,1,65,2,73,13,3,32,5,65,141,204,229,0,108,65,223,230,187,227,3,106,34,5,32,1,112,33,6,32,4,65,128,146,244,1,79,13,4,2,64,32,6,32,2,108,34,6,65,128,146,244,1,79,13,0,32,0,40,2,0,33,3,32,0,32,6,65,2,116,34,6,40,2,188,128,192,128,0,54,2,0,32,6,32,3,54,2,188,128,192,128,0,32,1,65,127,106,33,1,32,0,32,7,106,33,0,32,4,32,2,107,33,4,12,1,11,11,32,6,65,156,128,192,128,0,16,130,128,128,128,0,0,11,32,6,13,3,2,64,32,4,65,128,146,244,1,79,13,0,32,5,32,0,65,1,106,34,0,32,1,112,32,2,108,54,2,0,32,5,32,3,106,33,5,32,4,32,2,106,33,4,12,1,11,11,32,4,65,172,128,192,128,0,16,130,128,128,128,0,0,11,15,11,32,4,65,140,128,192,128,0,16,130,128,128,128,0,0,11,16,131,128,128,128,0,0,11,9,0,16,133,128,128,128,0,0,11,9,0,16,133,128,128,128,0,0,11,72,1,2,127,35,128,128,128,128,0,65,16,107,33,1,65,0,33,2,2,64,3,64,32,0,69,13,1,32,1,32,2,65,2,116,40,2,188,128,192,128,0,54,2,12,32,1,65,12,106,33,2,32,0,65,127,106,33,0,32,1,40,2,12,33,2,12,0,11,11,32,2,11,7,0,3,64,12,0,11,11,11,69,1,0,65,128,128,192,0,11,60,115,114,99,47,108,105,98,46,114,115,0,0,0,0,16,0,10,0,0,0,34,0,0,0,23,0,0,0,0,0,16,0,10,0,0,0,35,0,0,0,30,0,0,0,0,0,16,0,10,0,0,0,25,0,0,0,13,0,0,0],
       async run() {
@@ -149,9 +157,33 @@
           console.error(err);
         }
       }
-    }
+    };
 
     window.addEventListener('load', () => Oracle.run());
+
+    // 4. Measure Font Text
+    async function runTest() {
+      try {
+        await document.fonts.ready;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        ctx.font = '36px "TestEngineFont", sans-serif';
+        const text = 'A';
+
+        const width = ctx.measureText(text).width;
+
+        const statusElem = document.getElementById('status');
+        if (statusElem) {
+          statusElem.innerHTML = `<b>${width.toFixed(6)}px</b>`;
+        }
+      } catch (e) {
+        console.error("test error:", e);
+      }
+    }
+
+    window.addEventListener('load', runTest);
   </script>
 
 </body>
